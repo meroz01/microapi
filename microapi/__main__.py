@@ -1,12 +1,13 @@
 import sys, argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+
 args = ''
 
 class Server(BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
-        self.response_code = args.c if hasattr(args, 'c') else 200
-        self.data = args.d if hasattr(args, 'd') else '{}'
+        self.response_code = args.c
+        self.data = args.d
         self.api_path = args.e if hasattr(args, 'e') else ''
 
         super().__init__(request, client_address, server)
@@ -16,9 +17,7 @@ class Server(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.end_headers()
 
-        path = self.api_path
-
-        if self.path == f'/{path}':
+        if self.path == f'/{self.api_path}':
             self.send(self.data)
         else:
             self.send('No endpoint')
@@ -44,23 +43,20 @@ class Server(BaseHTTPRequestHandler):
     def send(self, data):
         self.wfile.write(data.encode('utf-8'))
 
+
 def main():
+    port = int(args.p) or 8080
+    print(f'Serve on: localhost:{port}/{args.e or ""}')
+    server = HTTPServer(('localhost', port), Server)
+    server.serve_forever()
+    server.server_close()
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='fast api')
     parser.add_argument('-p', help='port number', type=int)
     parser.add_argument('-e', help='enpoint path', type=str)
-    parser.add_argument('-d', help='data in string e.g. "api/hello"', type=str)
-    parser.add_argument('-c', help='optional, default 200', type=int)
-
+    parser.add_argument('-d', help='data in string e.g. "api/hello"', type=str, default='{}')
+    parser.add_argument('-c', help='response code, default 200', type=int, default=200)
     args = parser.parse_args()
-
-    port = args.p or 8080
-
-    server = HTTPServer(('localhost', port), Server)
-    server.serve_forever()
-
-    print(f'Serve on: localhost:{port}')
-    server.server_close()
-
-
-if __name__ == '__main__':
+    
     main()
